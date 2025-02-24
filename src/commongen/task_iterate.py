@@ -2,7 +2,7 @@ import re
 from typing import Dict, List
 from src.utils import Prompt
 
-from prompt_lib.backends import openai_api
+from prompt_lib import deepseek_api
 
 header = """Concepts: {concepts}
 """
@@ -79,14 +79,14 @@ class CommongenTaskIterate(Prompt):
         transfer_query = self.make_query(concepts=concepts, sent_to_fb=sent_to_fb)
         self.count += 1
 
-        output = openai_api.OpenaiAPIWrapper.call(
+        output = deepseek_api.OpenaiAPIWrapper.call(
             prompt=transfer_query,
             engine=self.engine,
             max_tokens=300,
             stop_token=self.inter_example_sep,
             temperature=0.7,
         )
-        response = openai_api.OpenaiAPIWrapper.get_first_response(output)
+        response = deepseek_api.OpenaiAPIWrapper.get_first_response(output)
 
         print("######")
         print()

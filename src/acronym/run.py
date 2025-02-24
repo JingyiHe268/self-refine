@@ -13,7 +13,7 @@ CHAT_GPT = "gpt-3.5-turbo"
 GPT4 = "gpt-4"
 
 
-ENGINE = CHAT_GPT
+ENGINE = "deepseek-r1"
 
 @retry_parse_fail_prone_cmd
 def iterative_acronym(title: str, max_attempts: int) -> str:

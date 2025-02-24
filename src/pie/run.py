@@ -12,7 +12,7 @@ CODEX = "code-davinci-002"
 GPT3 = "text-davinci-003"
 CHATGPT = "gpt-3.5-turbo"
 GPT4 = "gpt-4"
-ENGINE = CHATGPT
+ENGINE = "deepseek-r1"
 
 
 @retry_parse_fail_prone_cmd
@@ -76,11 +76,11 @@ def show_example(**kwargs):
     print(f"\n\nFAST CODE:\n{kwargs['fast_code']}\n")
     print("-" * 100)
     
-def run_over_slow_programs(slow_programs_file: str, max_attempts: int, outfile: str, feedback_type: str, temperature: float, backup_file: str = None):
+def run_over_slow_programs(slow_programs_file: str, max_attempts: int, outfile: str, feedback_type: str, temperature: float=0.7, backup_file: str = None):
 
     slow_programs_df = pd.read_json(slow_programs_file, lines=True, orient="records")
     slow_programs_df["run_logs"] = None
-
+    res=dict()
     if backup_file:
         backup_df = pd.read_json(backup_file, lines=True, orient="records")
         processed_inputs = set(backup_df["submission_id_v0"].tolist())
@@ -95,26 +95,32 @@ def run_over_slow_programs(slow_programs_file: str, max_attempts: int, outfile: 
 
         row_copy = row.to_dict()
         try:
+            print(row_copy["input"])
             run_logs = iterative_pie(slow_code=row["input"], max_attempts=max_attempts, feedback_type=feedback_type, temperature=temperature)
-            print(run_logs)
+            # print(run_logs)
             row_copy["run_logs"] = run_logs
             results.append(row_copy)
             if i % 20 == 0:
                 pd.DataFrame(results).to_json(outfile + f".{i}.jsonl", orient="records", lines=True)
+            res=row_copy
         except Exception as e:
             # raise e
             pass
     pd.DataFrame(results).to_json(outfile, orient="records", lines=True)
-    return run_logs
+    return res  
 
 
 
 def test():
     slow_code = (
-        "def sum(n):\\n    res = 0\\n    for i in range(n):\\n        res += i\\n    return res"
+       "def sum(n):\\n    res = 0\\n    for i in range(n):\\n        res += i\\n    return res"
     )
+
+    slow_code_jsonl = {"input": slow_code, "submission_id_v0": "test_id"}
+    with open("tmp/slow_code.jsonl", "w") as f:
+        f.write(json.dumps(slow_code_jsonl) + "\n")
     logs = run_over_slow_programs(
-        slow_programs=[slow_code], max_attempts=3, outfile="/tmp/test.jsonl"
+        slow_programs_file="tmp/slow_code.jsonl", max_attempts=3, outfile="tmp/test.jsonl",feedback_type="rich", temperature=0.6
     )
     for (slow_code, log) in logs.items():
         for attempt in log:
@@ -123,14 +129,26 @@ def test():
             print(f"Fast code:\n {attempt['fast_code']}")
             print()
 
+def test_1():
+    slow_code = (
+       "def sum(n):\\n    res = 0\\n    for i in range(n):\\n        res += i\\n    return res"
+    )
+    logs = iterative_pie(slow_code=slow_code, max_attempts=3, feedback_type="rich", temperature=0.6)
+    for attempt in logs:
+        print(f"Slow code:\n {attempt['slow_code']}")
+        print(f"Feedback: {attempt['feedback']}")
+        print(f"Fast code:\n {attempt['fast_code']}")
+        print()
+
 if __name__ == "__main__":
     import sys
-
+    import json
     if sys.argv[1] == "test":
-        test()
+        test_1()
     else:
         import argparse
         import os
+
         args = argparse.ArgumentParser()
         args.add_argument("--slow_programs_file", type=str, required=True)
         args.add_argument("--max_attempts", type=int, default=3)

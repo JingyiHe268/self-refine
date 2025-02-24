@@ -1,7 +1,7 @@
 import pandas as pd
 from src.utils import Prompt
 
-from prompt_lib.backends import openai_api
+from prompt_lib import deepseek_api
 
 
 class AcronymGenTaskInit(Prompt):
@@ -33,25 +33,27 @@ Acronym: {answer}"""
 
     def __call__(self, title: str) -> str:
         generation_query = self.make_query(title)
-
-        output = openai_api.OpenaiAPIWrapper.call(
+        output = deepseek_api.OpenaiAPIWrapper.call(
             prompt=generation_query,
             engine=self.engine,
-            max_tokens=300,
-            stop_token="###",
+            max_tokens=8000,
+            stop_token="",
             temperature=0.7,
         )
 
-        generated_acronym = openai_api.OpenaiAPIWrapper.get_first_response(output)
+        generated_acronym = deepseek_api.OpenaiAPIWrapper.get_first_response(output)
         # print("output:")
         # print(generated_acronym)
         # sys.exit()
+        # generated_acronym=generated_acronym.split("</think>")[1].strip()
+        print(generated_acronym)
+        print(self.answer_prefix)
         generated_acronym = generated_acronym.split(self.answer_prefix)[1].replace("#", "").strip()
         return generated_acronym.strip()
 
 
 def test():
-    task_init = AcronymGenTaskInit(engine="code-davinci-002", prompt_examples="data/prompt/acronym/init.jsonl")
+    task_init = AcronymGenTaskInit(engine="deepseek-r1", prompt_examples="data/prompt/acronym/init.jsonl")
     print(task_init.prompt)
 
 

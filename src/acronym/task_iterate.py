@@ -3,7 +3,7 @@ from typing import Dict, List
 from src.utils import Prompt
 import pandas as pd
 
-from prompt_lib.backends import openai_api
+from prompt_lib import deepseek_api
 
 
 class AcronymGenTaskIterate(Prompt):
@@ -102,16 +102,16 @@ Okay, let's use this feedback to improve the acronym.
         with open(f"acronym_iterate_{self.count}.txt", "w") as f:
             f.write(transfer_query + "\n")
 
-        output = openai_api.OpenaiAPIWrapper.call(
+        output = deepseek_api.OpenaiAPIWrapper.call(
             prompt=transfer_query,
             engine=self.engine,
             max_tokens=300,
             stop_token=self.inter_example_sep,
             temperature=0.7,
         )
-        response = openai_api.OpenaiAPIWrapper.get_first_response(output)
-
-        
+        response = deepseek_api.OpenaiAPIWrapper.get_first_response(output)
+        response = response.split("</think>")[1].strip()
+        print(response)
         acronym = response.split("Acronym:")[1].strip().split("\n")[0].strip()
         
         new_title = response.split("Title:")[1].strip().split("\n")[0].strip()

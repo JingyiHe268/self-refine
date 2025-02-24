@@ -1,11 +1,11 @@
 import pandas as pd
-from prompt_lib.backends import openai_api
+from prompt_lib import deepseek_api
 
 from src.utils import Prompt
 
 
 class PieFeedback(Prompt):
-    def __init__(self, engine: str, prompt_examples: str, temperature: float, max_tokens: int = 300) -> None:
+    def __init__(self, engine: str, prompt_examples: str, temperature: float, max_tokens: int = 8000) -> None:
         super().__init__(
             question_prefix="",
             answer_prefix="# Why is this code slow?\n",
@@ -24,7 +24,7 @@ class PieFeedback(Prompt):
     def __call__(self, slow_code: str):
         generation_query = self.make_query(slow_code=slow_code)
 
-        output = openai_api.OpenaiAPIWrapper.call(
+        output = deepseek_api.OpenaiAPIWrapper.call(
             prompt=generation_query,
             engine=self.engine,
             max_tokens=self.max_tokens,
@@ -32,7 +32,11 @@ class PieFeedback(Prompt):
             temperature=self.temperature,
         )
         
-        generated_feedback = openai_api.OpenaiAPIWrapper.get_first_response(output)
+        generated_feedback = deepseek_api.OpenaiAPIWrapper.get_first_response(output)
+        if "</think>" in generated_feedback:
+            generated_feedback = generated_feedback.split("</think>")[1].strip()
+        # if "```python" in generated_feedback:
+        #     generated_feedback = generated_feedback.split("```python")[1].split("```")[0].strip()
         if "### END" in generated_feedback:
             generated_feedback = generated_feedback.split("### END")[0]
         return generated_feedback.strip()
@@ -45,11 +49,11 @@ class PieFeedback(Prompt):
 def test():
     task_fb = PieFeedback(
         prompt_examples="data/prompt/pie/feedback.txt",
-        engine="gpt-3.5-turbo",
+        engine="deepseek-r1",
         temperature=0.0
     )
 
-    print(task_fb.prompt)
+    # print(task_fb.prompt)
     slow_code = "def sum(n):\\n    res = 0\\n    for i in range(n):\\n        res += i\\n    return res"
     print(task_fb(slow_code))
     

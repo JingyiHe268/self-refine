@@ -1,13 +1,18 @@
 import re
 from typing import Set, List
 import pandas as pd
-from prompt_lib.backends import openai_api
+from prompt_lib import deepseek_api
 import nltk
 import spacy
 
-nlp = spacy.load("en_core_web_sm")
-from src.utils import Prompt
 
+import subprocess
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
+    nlp = spacy.load("en_core_web_sm")
+from src.utils import Prompt
 
 class CommongenFeedback(Prompt):
     def __init__(self, engine: str, prompt_examples: str, max_tokens: int = 300) -> None:
@@ -48,7 +53,7 @@ Commonsense Feedback: {commonsense_feedback}"""
     def __call__(self, sentence: str, concepts: List[str]):
         prompt = self.make_query(sentence=sentence, concepts=concepts)
 
-        output = openai_api.OpenaiAPIWrapper.call(
+        output = deepseek_api.OpenaiAPIWrapper.call(
             prompt=prompt,
             engine=self.engine,
             max_tokens=self.max_tokens,
@@ -56,7 +61,7 @@ Commonsense Feedback: {commonsense_feedback}"""
             temperature=0.7,
         )
         
-        generated_feedback = openai_api.OpenaiAPIWrapper.get_first_response(output)
+        generated_feedback = deepseek_api.OpenaiAPIWrapper.get_first_response(output)
         commonsense_feedback = re.search(r"Commonsense Feedback: (.*)", generated_feedback).group(1)
         commonsense_feedback = self.fix_feedback(sentence=sentence, concepts=concepts, feedback=commonsense_feedback)
 

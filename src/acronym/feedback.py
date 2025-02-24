@@ -1,11 +1,11 @@
 import pandas as pd
-from prompt_lib.backends import openai_api
+from prompt_lib import deepseek_api
 
 from src.utils import Prompt
 
 
 class AcronymGenFeedback(Prompt):
-    def __init__(self, engine: str, prompt_examples: str, max_tokens: int = 300) -> None:
+    def __init__(self, engine: str, prompt_examples: str, max_tokens: int = 8000) -> None:
         super().__init__(
             question_prefix="",
             answer_prefix="",
@@ -58,7 +58,7 @@ Here are some examples of this scoring rubric:
     def __call__(self, title: str, acronym: str):
         prompt = self.get_prompt_with_question(title=title, acronym=acronym)
 
-        output = openai_api.OpenaiAPIWrapper.call(
+        output = deepseek_api.OpenaiAPIWrapper.call(
             prompt=prompt,
             engine=self.engine,
             max_tokens=self.max_tokens,
@@ -66,9 +66,11 @@ Here are some examples of this scoring rubric:
             temperature=0.7,
         )
         
-        generated_feedback = openai_api.OpenaiAPIWrapper.get_first_response(output)
-        generated_feedback = generated_feedback.split("Scores:")[1].strip()
-        generated_feedback = generated_feedback.split("#")[0].strip()
+        generated_feedback = deepseek_api.OpenaiAPIWrapper.get_first_response(output)
+        generated_feedback=generated_feedback.split("</think>")[1].strip()
+        print(generated_feedback)
+        # generated_feedback = generated_feedback.split("Scores:")[1].strip()
+        # generated_feedback = generated_feedback.split("#")[0].strip()
         return generated_feedback
 
     def get_prompt_with_question(self, title: str, acronym: str):
@@ -85,7 +87,7 @@ Acronym: {acronym}"""
 
 if __name__ == "__main__":
     feedback = AcronymGenFeedback(
-        engine="davinci-code-002",
+        engine="deepseek-r1",
         prompt_examples="data/prompt/acronym/feedback.jsonl",
     )
     

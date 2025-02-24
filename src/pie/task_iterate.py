@@ -2,7 +2,7 @@ import sys
 from typing import Dict, List
 from src.utils import Prompt
 
-from prompt_lib.backends import openai_api
+from prompt_lib import deepseek_api
 
 
 class PieIterate(Prompt):
@@ -32,16 +32,20 @@ class PieIterate(Prompt):
     ) -> str:
         generation_query = self.make_query(slow_code=slow_code, feedback=feedback)
 
-        output = openai_api.OpenaiAPIWrapper.call(
+        output = deepseek_api.OpenaiAPIWrapper.call(
             prompt=generation_query,
             engine=self.engine,
-            max_tokens=300,
+            max_tokens=8000,
             stop_token="### END",
             temperature=self.temperature,
         )
-        generated_code = openai_api.OpenaiAPIWrapper.get_first_response(output)
-
-        
+        generated_code = deepseek_api.OpenaiAPIWrapper.get_first_response(output)
+        if "</think>" in generated_code:
+            generated_code = generated_code.split("</think>")[1].strip()
+        if "```python" in generated_code:
+            generated_code = generated_code.split("```python")[1].split("```")[0].strip()
+        if "code:" in generated_code:
+            generated_code = generated_code.split("code:")[1].strip()
         if "### END" in generated_code:
             generated_code = generated_code.split("### END")[0]
         return generated_code.strip()
@@ -59,7 +63,7 @@ class PieIterate(Prompt):
 # Improved version:
 
 """     
-        query = example_template.format(slow_code=slow_code, feedback=feedback)
+        query = example_template.format(slow_code=slow_code, feedback=feedback, instr=instr)
 
         return f"{self.prompt}{query}"
 
@@ -67,7 +71,7 @@ class PieIterate(Prompt):
 def test():
     task_iterate = PieIterate(
         prompt_examples="data/prompt/pie/iterate.txt",
-        engine="gpt-3.5-turbo",
+        engine="deepseek-r1",
         temperature=0.6
     )
 

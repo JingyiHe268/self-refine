@@ -2,7 +2,7 @@ from typing import List
 import pandas as pd
 from src.utils import Prompt
 
-from prompt_lib.backends import openai_api
+from prompt_lib import deepseek_api
 
 
 class CommongenTaskInit(Prompt):
@@ -37,15 +37,17 @@ Sentence: {sentence}"""
     def __call__(self, concepts: List[str]) -> str:
         generation_query = self.make_query(concepts) + "\nDo your best! It's okay if the sentence is not coherent.\n"
 
-        output = openai_api.OpenaiAPIWrapper.call(
+        output = deepseek_api.OpenaiAPIWrapper.call(
             prompt=generation_query,
             engine=self.engine,
-            max_tokens=300,
+            max_tokens=8000,
             stop_token="###",
             temperature=0.7,
         )
 
-        generated_sent = openai_api.OpenaiAPIWrapper.get_first_response(output)
+        generated_sent = deepseek_api.OpenaiAPIWrapper.get_first_response(output)
+        
+        generated_sent=generated_sent.split("</think>")[1].strip()
         print(generated_sent)
         generated_sent = generated_sent.split(self.answer_prefix)[1].replace("#", "").strip()
         return generated_sent.strip()

@@ -11,7 +11,7 @@ CODEX = "code-davinci-002"
 GPT3 = "text-davinci-003"
 CHAT_GPT = "gpt-3.5-turbo"
 GPT4 = "gpt-4"
-ENGINE = CHAT_GPT
+ENGINE = "deepseek-r1"
 
 task_init = AcronymGenTaskInit(engine=ENGINE, prompt_examples="data/prompt/acronym/init.jsonl")
 

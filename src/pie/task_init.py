@@ -1,7 +1,7 @@
 import pandas as pd
 from src.utils import Prompt
 
-from prompt_lib.backends import openai_api
+from prompt_lib import deepseek_api
 
 
 class PieInit(Prompt):
@@ -27,17 +27,19 @@ class PieInit(Prompt):
 
     def __call__(self, slow_code: str) -> str:
         generation_query = self.make_query(slow_code)
-        output = openai_api.OpenaiAPIWrapper.call(
+        output = deepseek_api.OpenaiAPIWrapper.call(
             prompt=generation_query,
             engine=self.engine,
-            max_tokens=300,
+            max_tokens=8000,
             stop_token="### END",
             temperature=self.temperature,
         )
 
-        generated_code = openai_api.OpenaiAPIWrapper.get_first_response(output)
-
-        # if by chance the end token is present in the generated code, remove it
+        generated_code = deepseek_api.OpenaiAPIWrapper.get_first_response(output)
+        if "</think>" in generated_code:
+            generated_code = generated_code.split("</think>")[1].strip()
+        if "```python" in generated_code:
+            generated_code = generated_code.split("```python")[1].split("```")[0].strip()
         if "### END" in generated_code:
             generated_code = generated_code.split("### END")[0]
         return generated_code.strip()
@@ -46,8 +48,8 @@ class PieInit(Prompt):
 def test():
     task_init = PieInit(
         prompt_examples="data/prompt/pie/init.txt",
-        engine="gpt-3.5-turbo",
-        temperature=0.0
+        engine="deepseek-r1",
+        temperature=0.7
     )
 
     slow_code = """
@@ -58,7 +60,7 @@ def sum(n):
     return res
 """
     single_line_ip = "def sum(n): res = 0; for i in range(n): res += i; return res\n\n# Optimize the above program for faster performance\n\n   |||"
-    print(task_init.prompt)
+    # print(task_init.prompt)
     print(task_init(slow_code))
     
 
