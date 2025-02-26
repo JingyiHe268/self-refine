@@ -40,14 +40,10 @@ class PieIterate(Prompt):
             temperature=self.temperature,
         )
         generated_code = deepseek_api.OpenaiAPIWrapper.get_first_response(output)
-        if "</think>" in generated_code:
-            generated_code = generated_code.split("</think>")[1].strip()
-        if "```python" in generated_code:
-            generated_code = generated_code.split("```python")[1].split("```")[0].strip()
-        if "code:" in generated_code:
-            generated_code = generated_code.split("code:")[1].strip()
-        if "### END" in generated_code:
-            generated_code = generated_code.split("### END")[0]
+        split_words = {"### END": 0, "```python": 1, "</think>": 1, "```": 0, "code:": 1, "```llvm": 1}
+        for word in split_words.keys():
+            if word in generated_code:
+                generated_code = generated_code.split(word)[split_words[word]].strip()
         return generated_code.strip()
 
 

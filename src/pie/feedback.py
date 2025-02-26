@@ -33,12 +33,10 @@ class PieFeedback(Prompt):
         )
         
         generated_feedback = deepseek_api.OpenaiAPIWrapper.get_first_response(output)
-        if "</think>" in generated_feedback:
-            generated_feedback = generated_feedback.split("</think>")[1].strip()
-        # if "```python" in generated_feedback:
-        #     generated_feedback = generated_feedback.split("```python")[1].split("```")[0].strip()
-        if "### END" in generated_feedback:
-            generated_feedback = generated_feedback.split("### END")[0]
+        split_words = {"### END": 0, "</think>": 1}
+        for word in split_words.keys():
+            if word in generated_feedback:
+                generated_feedback = generated_feedback.split(word)[split_words[word]].strip()
         return generated_feedback.strip()
 
     def make_query(self, slow_code: str):

@@ -5,8 +5,9 @@ from openai import OpenAI
 import random
 import time
 import json
-
-Client=OpenAI(api_key="token-YatCC2025",base_url="http://503804.proxy.nscc-gz.cn:8888/v1/")
+api_key=os.getenv("API_KEY")
+base_url=os.getenv("BASE_URL")
+Client=OpenAI(api_key=api_key,base_url=base_url)
 
 class DeepseekAPIWrapper():
     @staticmethod
